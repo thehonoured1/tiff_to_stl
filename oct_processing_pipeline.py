@@ -23,10 +23,14 @@ def load_oct_volume(tiff_path):
     return volume.astype(np.uint8)
 
 
-def filter_volume_3d(volume, kernel_size=(3, 5, 5)):
+def filter_volume_3d(volume, kernel_size=(3, 7, 7)):
     """
     Applies a 3D Median Filter across the (Z, Y, X) dimensions to suppress
     OCT speckle noise while preserving inter-slice continuity along the Z-axis.
+        PARAMETER TUNING:
+        Higher Z (e.g., 5, 5, 5): Increase if you have many slices close together and need stronger smoothing across adjacent B-scans.
+        Lower Z (e.g., 1, 5, 5): Use if you have very few B-scans (large slice spacing along Z) to avoid blurring different cross-sections into each other.
+        Higher Y/X (e.g., 3, 7, 7): Increase if your raw images are extremely grainy or have heavy speckle noise.
     """
     print(f"[2/5] Applying 3D Median Filter (Kernel: {kernel_size})...")
     filtered_vol = median_filter(volume, size=kernel_size)
@@ -37,11 +41,14 @@ def detect_boundaries_2d(bscan_filtered):
     """
     Detects upper (air-tissue) and lower boundary transitions on a single 2D B-scan
     using vertical directional Sobel derivatives.
+        PARAMETER TUNING:
+        ksize=3: Picks up fine, sharp detail. Ideal for high-resolution scans where the enamel surface transition occurs over just a few pixels.
+        ksize=7: Averages over a wider vertical band. Ideal for blurry, low-contrast tissue transitions (like soft gum tissue) or lower-resolution scans.
     """
     # 1. Compute Vertical Gradient (Sobel Y derivative)
     # Directional gradient helps distinguish air->tissue (positive) from tissue->air (negative)
-    sobel_y = cv2.Sobel(bscan_filtered, cv2.CV_64F, dx=0, dy=1, ksize=5)
-
+    sobel_y = cv2.Sobel(bscan_filtered, cv2.CV_64F, dx=0, dy=1, ksize=3)
+                                                                #   ▲
     # Gaussian blur the gradient to prevent noise spikes from breaking line continuity
     sobel_y_smooth = cv2.GaussianBlur(sobel_y, (5, 5), 0)
 
@@ -52,24 +59,31 @@ def detect_boundaries_2d(bscan_filtered):
     # 2. Extract upper and lower surface profile across each A-scan column
     for x in range(width):
         column_grad = sobel_y_smooth[:, x]
-
+        # PARAMETER TUNING:
         # Upper boundary: strongest positive transition (dark background to bright tissue)
         top_idx = np.argmax(column_grad)
-        top_boundary[x] = top_idx if column_grad[top_idx] > 10 else 0
+        top_boundary[x] = top_idx if column_grad[top_idx] > 5 else 0
+          #                                                  ▲
+          #                                                  └── Min gradient intensity
 
         # Lower boundary: strongest negative transition (bright tissue to dark deep region)
         # Only search below the upper boundary
         search_start = min(top_idx + 15, height - 1)
+        #                             ▲
+        #                             └── Search offset below top surface (in pixels)
         if search_start < height - 1:
             bottom_idx = search_start + np.argmin(column_grad[search_start:])
             bottom_boundary[x] = bottom_idx if abs(column_grad[bottom_idx]) > 10 else height - 1
+                #                                                               ▲
+                #                                                               └── Min gradient intensity
         else:
             bottom_boundary[x] = height - 1
 
-    # Smooth boundary curves across adjacent columns (X-axis)
+    # PARAMETER TUNING: Smooth boundary curves across adjacent columns (X-axis)
     top_boundary = cv2.GaussianBlur(top_boundary.astype(np.float32), (15, 1), 0).astype(int).ravel()
     bottom_boundary = cv2.GaussianBlur(bottom_boundary.astype(np.float32), (15, 1), 0).astype(int).ravel()
-
+                #                                                                 ▲
+                #                                                                 └── Horizontal smoothing window (must be odd)
     return top_boundary, bottom_boundary
 
 
