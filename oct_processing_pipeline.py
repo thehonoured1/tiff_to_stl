@@ -13,7 +13,7 @@ def load_oct_volume(tiff_path):
     print(f"[1/5] Loading OCT stack from: {tiff_path}")
     volume = io.imread(tiff_path)
 
-    # Ensure 3D array layout (Slices/Z, Height/Y, Width/X)
+    # Ensure 3D array layout if 2D (Slices/Z, Height/Y, Width/X)
     if volume.ndim == 2:
         volume = np.expand_dims(volume, axis=0)
 
@@ -33,7 +33,7 @@ def filter_volume_3d(volume, kernel_size=(3, 3, 3)):
         Higher Y/X (e.g., 3, 7, 7): Increase if your raw images are extremely grainy or have heavy speckle noise.
     """
     print(f"[2/5] Applying 3D Median Filter (Kernel: {kernel_size})...")
-    filtered_vol = median_filter(volume, size=kernel_size)
+    filtered_vol = median_filter(volume, size=kernel_size)  #kernel size == window size
     return filtered_vol
 
 
@@ -43,8 +43,8 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20):
     Prevents vertical zigzag jumps while respecting minimum gradient intensity thresholds.
     """
     height, width = cost_matrix.shape
-    dp = np.full((height, width), np.inf, dtype=np.float32)
-    backtrack = np.zeros((height, width), dtype=int)
+    dp = np.full((height, width), np.inf, dtype=np.float32) #store the cumulative cost of the cheapest path to reach any given pixel
+    backtrack = np.zeros((height, width), dtype=int)        #prev Y coordinate.
 
     # Initialize first column
     dp[:, 0] = cost_matrix[:, 0]

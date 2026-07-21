@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="B-scan parameters highlighted via comments">
+    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="&quot;demo mode&quot;, slices to export at .25,.50,.75 for quick execution of demo images of the borders; &#10;Improved quality using Graph-Cut.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/oct_processing_pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/oct_processing_pipeline.py" afterDir="false" />
     </list>
@@ -43,18 +43,18 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "Python.converter.executor": "Run",
-    "Python.oct_processing_pipeline.executor": "Run",
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "git-widget-placeholder": "master",
-    "settings.editor.selected.configurable": "preferences.lookFeel"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;Python.converter.executor&quot;: &quot;Run&quot;,
+    &quot;Python.oct_processing_pipeline.executor&quot;: &quot;Run&quot;,
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;master&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;
   }
-}]]></component>
+}</component>
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
@@ -95,13 +95,22 @@
       <option name="project" value="LOCAL" />
       <updated>1784600807128</updated>
     </task>
-    <option name="localTasksCounter" value="4" />
+    <task id="LOCAL-00004" summary="&quot;demo mode&quot;, slices to export at .25,.50,.75 for quick execution of demo images of the borders; &#10;Improved quality using Graph-Cut.">
+      <option name="closed" value="true" />
+      <created>1784609856984</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1784609856984</updated>
+    </task>
+    <option name="localTasksCounter" value="5" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="init?" />
     <MESSAGE value="added OCT B-scan processing that produces 3 sample images to see the binary mask." />
     <MESSAGE value="B-scan parameters highlighted via comments" />
-    <option name="LAST_COMMIT_MESSAGE" value="B-scan parameters highlighted via comments" />
+    <MESSAGE value="&quot;demo mode&quot;, slices to export at .25,.50,.75 for quick execution of demo images of the borders; &#10;Improved quality using Graph-Cut." />
+    <option name="LAST_COMMIT_MESSAGE" value="&quot;demo mode&quot;, slices to export at .25,.50,.75 for quick execution of demo images of the borders; &#10;Improved quality using Graph-Cut." />
   </component>
 </project>
