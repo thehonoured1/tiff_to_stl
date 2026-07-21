@@ -55,7 +55,7 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20):
             y_min = max(0, y - max_step)            #python's min/max returns the min/max value among its params.
             y_max = min(height, y + max_step + 1)   #y_min/max works to restrict range of checking. y as the current pixel, you can only fluctuate +- max_step
 
-            prev_costs = dp[y_min:y_max, x - 1]     #x-1 refers to the prev row.
+            prev_costs = dp[y_min:y_max, x - 1]     #    x-1 refers to the prev row.
             best_prev_offset = np.argmin(prev_costs)    # returns the index (position) of the minimum value along a specified axis
             best_prev_y = y_min + best_prev_offset
 
@@ -87,9 +87,8 @@ def detect_boundaries_2d(bscan_filtered):
         ksize=7: Averages over a wider vertical band. Ideal for blurry, low-contrast tissue transitions (like soft gum tissue) or lower-resolution scans.
     """
     # 1. Compute Vertical Gradient (Sobel Y derivative)
-    sobel_y = cv2.Sobel(bscan_filtered, cv2.CV_64F, dx=0, dy=1, ksize=3)
-                                                                #   ▲
-
+    sobel_y = cv2.Sobel(bscan_filtered, cv2.CV_64F, dx=0, dy=1, ksize=7)
+                                                                #   ▲ must be odd
     # Gaussian blur the gradient to prevent noise spikes from breaking line continuity
     sobel_y_smooth = cv2.GaussianBlur(sobel_y, (3, 3), 0)
 
@@ -99,80 +98,50 @@ def detect_boundaries_2d(bscan_filtered):
     # Upper boundary: strongest positive transition (dark background to bright tissue)
     # --- METHOD 3: UPPER BOUNDARY GRAPH-CUT ---
     max_pos_grad = np.max(sobel_y_smooth)
-    top_cost = max_pos_grad - sobel_y_smooth
+    top_cost = max_pos_grad - sobel_y_smooth # invert the high gradient so it appears 'cheap' to graph_cut_solver.
     top_cost = np.clip(top_cost, 0, None)
 
     # Reduced threshold to 2 so faint enamel reflections are recognized
-    top_boundary = graph_cut_solver(top_cost, min_threshold=2, max_step=20)
+    top_boundary = graph_cut_solver(top_cost, min_threshold=2, max_step=50)
     #                                                       ▲
     #                                                       └── Min gradient intensity
-
-    # Lower boundary: strongest negative transition (bright tissue to dark deep region)
-    # --- METHOD 3: LOWER BOUNDARY GRAPH-CUT ---
-    neg_sobel = -sobel_y_smooth
-    max_neg_grad = np.max(neg_sobel)
-    bot_cost = max_neg_grad - neg_sobel
-    bot_cost = np.clip(bot_cost, 0, None)
-
-    # Only search below the upper boundary
-    for x in range(width):
-        search_start = min(top_boundary[x] + 15, height - 1)
-        #                             ▲
-        #                             └── Search offset below top surface (in pixels)
-        bot_cost[:search_start, x] = np.inf
-
-    bottom_boundary = graph_cut_solver(bot_cost, min_threshold=5, max_step=20)
-    #                                                           ▲
-    #                                                           └── Min gradient intensity
 
     # PARAMETER TUNING: Smooth boundary curves across adjacent columns (X-axis)
     # Reduced kernel to (5, 1) so steep peaks are not flattened out
     top_boundary = cv2.GaussianBlur(top_boundary.astype(np.float32), (5, 1), 0).astype(int).ravel()
-    bottom_boundary = cv2.GaussianBlur(bottom_boundary.astype(np.float32), (5, 1), 0).astype(int).ravel()
-                #                                                                 ▲
-                #                                                                 └── Horizontal smoothing window (must be odd)
-    return top_boundary, bottom_boundary
+                #                                                           ▲
+                #                                                           └── Horizontal smoothing window (must be odd)
+    return top_boundary
 
 
-def create_binary_mask(shape, top_boundary, bottom_boundary):
-    """
-    Generates a solid 8-bit binary mask (White = Tissue, Black = Background)
-    filling the region enclosed between the detected upper and lower boundaries.
-    """
+def create_binary_mask(shape, top_boundary, offset=10):
     height, width = shape
     binary_mask = np.zeros((height, width), dtype=np.uint8)
 
     for x in range(width):
         y_start = top_boundary[x]
-        y_end = bottom_boundary[x]
-        if y_end > y_start and y_start > 0:
-            binary_mask[y_start:y_end, x] = 255
-
-    # Apply 2D morphological Closing to fill small inner voids or gaps
+        y_end = y_start + offset  # Fixed 5px thickness 📐
+        if y_start > 0:
+            binary_mask[y_start:y_end, x] = 255 # create the 5 pixels of white.
+    # gap cleaning
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
-    binary_mask = cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel)
+    return cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel)
+                #                           ^dilation followed by an erosion. fills in tiny single-pixel gaps or holes inside the white band.
 
-    return binary_mask
-
-
-def create_overlay_image(bscan_raw, top_boundary, bottom_boundary):
-    """
-    Draws detected boundary lines over the RGB copy of the original B-scan.
-    Green = Top Boundary (Surface), Red = Bottom Boundary
-    """
+def create_overlay_image(bscan_raw, top_boundary, offset=5):
     overlay = cv2.cvtColor(bscan_raw, cv2.COLOR_GRAY2BGR)
     width = bscan_raw.shape[1]
 
     for x in range(1, width):
-        # Draw Top Boundary Line (Green)
+        # Top Boundary Line (Green) 🟢
         pt1_top = (x - 1, top_boundary[x - 1])
         pt2_top = (x, top_boundary[x])
         if pt1_top[1] > 0 and pt2_top[1] > 0:
-            cv2.line(overlay, pt1_top, pt2_top, (0, 255, 0), 2)
+            cv2.line(overlay, pt1_top, pt2_top, (0, 255, 0), 2) # drawing
 
-        # Draw Bottom Boundary Line (Red)
-        pt1_bot = (x - 1, bottom_boundary[x - 1])
-        pt2_bot = (x, bottom_boundary[x])
+        # 5px Offset Line (Red) 🔴
+        pt1_bot = (x - 1, top_boundary[x - 1] + offset)
+        pt2_bot = (x, top_boundary[x] + offset)
         cv2.line(overlay, pt1_bot, pt2_bot, (0, 0, 255), 2)
 
     return overlay
@@ -209,12 +178,12 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
         raw_bscan = raw_volume[slice_idx]
         filt_bscan = filtered_volume[slice_idx]
 
-        # 3. Detect 2D Boundaries
-        top_b, bot_b = detect_boundaries_2d(filt_bscan)
+        # 3. Detect 2D Upper Boundary Only
+        top_b = detect_boundaries_2d(filt_bscan)
 
-        # 4. Create Binary Mask & Overlay
-        binary_mask = create_binary_mask((height, width), top_b, bot_b)
-        overlay_img = create_overlay_image(raw_bscan, top_b, bot_b)
+        # 4. Create Binary Mask & Overlay (5px offset)
+        binary_mask = create_binary_mask((height, width), top_b, offset=10)
+        overlay_img = create_overlay_image(raw_bscan, top_b, offset=10)
 
         # 5. Save visual report panels for selected key slices
         fig, axes = plt.subplots(1, 4, figsize=(20, 5))
