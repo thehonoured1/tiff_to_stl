@@ -23,7 +23,7 @@ def load_oct_volume(tiff_path):
     return volume.astype(np.uint8)
 
 
-def filter_volume_3d(volume, kernel_size=(3, 7, 7)):
+def filter_volume_3d(volume, kernel_size=(3, 3, 3)):
     """
     Applies a 3D Median Filter across the (Z, Y, X) dimensions to suppress
     OCT speckle noise while preserving inter-slice continuity along the Z-axis.
@@ -37,51 +37,98 @@ def filter_volume_3d(volume, kernel_size=(3, 7, 7)):
     return filtered_vol
 
 
+def graph_cut_solver(cost_matrix, min_threshold, max_step=20):
+    """
+    Solves for the globally optimal continuous surface path using Dynamic Programming (Graph-Cut).
+    Prevents vertical zigzag jumps while respecting minimum gradient intensity thresholds.
+    """
+    height, width = cost_matrix.shape
+    dp = np.full((height, width), np.inf, dtype=np.float32)
+    backtrack = np.zeros((height, width), dtype=int)
+
+    # Initialize first column
+    dp[:, 0] = cost_matrix[:, 0]
+
+    # Forward Accumulation Pass
+    for x in range(1, width):
+        for y in range(height):
+            y_min = max(0, y - max_step)
+            y_max = min(height, y + max_step + 1)
+
+            prev_costs = dp[y_min:y_max, x - 1]
+            best_prev_offset = np.argmin(prev_costs)
+            best_prev_y = y_min + best_prev_offset
+
+            dp[y, x] = cost_matrix[y, x] + dp[best_prev_y, x - 1]
+            backtrack[y, x] = best_prev_y
+
+    # Backtracking Pass
+    optimal_path = np.zeros(width, dtype=int)
+    optimal_path[-1] = np.argmin(dp[:, -1])
+
+    for x in range(width - 1, 0, -1):
+        optimal_path[x - 1] = backtrack[optimal_path[x], x]
+
+    # Validate path against user's minimum intensity threshold
+    for x in range(width):
+        best_y = optimal_path[x]
+        if (np.max(cost_matrix[:, x]) - cost_matrix[best_y, x]) < min_threshold:
+            optimal_path[x] = 0 if min_threshold == 2 else height - 1
+
+    return optimal_path
+
+
 def detect_boundaries_2d(bscan_filtered):
     """
     Detects upper (air-tissue) and lower boundary transitions on a single 2D B-scan
-    using vertical directional Sobel derivatives.
+    using Method 3 (Graph-Cut / Dynamic Programming) on vertical directional Sobel derivatives.
         PARAMETER TUNING:
         ksize=3: Picks up fine, sharp detail. Ideal for high-resolution scans where the enamel surface transition occurs over just a few pixels.
         ksize=7: Averages over a wider vertical band. Ideal for blurry, low-contrast tissue transitions (like soft gum tissue) or lower-resolution scans.
     """
     # 1. Compute Vertical Gradient (Sobel Y derivative)
-    # Directional gradient helps distinguish air->tissue (positive) from tissue->air (negative)
     sobel_y = cv2.Sobel(bscan_filtered, cv2.CV_64F, dx=0, dy=1, ksize=3)
                                                                 #   ▲
+
     # Gaussian blur the gradient to prevent noise spikes from breaking line continuity
-    sobel_y_smooth = cv2.GaussianBlur(sobel_y, (5, 5), 0)
+    sobel_y_smooth = cv2.GaussianBlur(sobel_y, (3, 3), 0)
 
     height, width = bscan_filtered.shape
-    top_boundary = np.zeros(width, dtype=int)
-    bottom_boundary = np.zeros(width, dtype=int)
 
-    # 2. Extract upper and lower surface profile across each A-scan column
+    # PARAMETER TUNING:
+    # Upper boundary: strongest positive transition (dark background to bright tissue)
+    # --- METHOD 3: UPPER BOUNDARY GRAPH-CUT ---
+    max_pos_grad = np.max(sobel_y_smooth)
+    top_cost = max_pos_grad - sobel_y_smooth
+    top_cost = np.clip(top_cost, 0, None)
+
+    # Reduced threshold to 2 so faint enamel reflections are recognized
+    top_boundary = graph_cut_solver(top_cost, min_threshold=2, max_step=20)
+    #                                                       ▲
+    #                                                       └── Min gradient intensity
+
+    # Lower boundary: strongest negative transition (bright tissue to dark deep region)
+    # --- METHOD 3: LOWER BOUNDARY GRAPH-CUT ---
+    neg_sobel = -sobel_y_smooth
+    max_neg_grad = np.max(neg_sobel)
+    bot_cost = max_neg_grad - neg_sobel
+    bot_cost = np.clip(bot_cost, 0, None)
+
+    # Only search below the upper boundary
     for x in range(width):
-        column_grad = sobel_y_smooth[:, x]
-        # PARAMETER TUNING:
-        # Upper boundary: strongest positive transition (dark background to bright tissue)
-        top_idx = np.argmax(column_grad)
-        top_boundary[x] = top_idx if column_grad[top_idx] > 5 else 0
-          #                                                  ▲
-          #                                                  └── Min gradient intensity
-
-        # Lower boundary: strongest negative transition (bright tissue to dark deep region)
-        # Only search below the upper boundary
-        search_start = min(top_idx + 15, height - 1)
+        search_start = min(top_boundary[x] + 15, height - 1)
         #                             ▲
         #                             └── Search offset below top surface (in pixels)
-        if search_start < height - 1:
-            bottom_idx = search_start + np.argmin(column_grad[search_start:])
-            bottom_boundary[x] = bottom_idx if abs(column_grad[bottom_idx]) > 10 else height - 1
-                #                                                               ▲
-                #                                                               └── Min gradient intensity
-        else:
-            bottom_boundary[x] = height - 1
+        bot_cost[:search_start, x] = np.inf
+
+    bottom_boundary = graph_cut_solver(bot_cost, min_threshold=5, max_step=20)
+    #                                                           ▲
+    #                                                           └── Min gradient intensity
 
     # PARAMETER TUNING: Smooth boundary curves across adjacent columns (X-axis)
-    top_boundary = cv2.GaussianBlur(top_boundary.astype(np.float32), (15, 1), 0).astype(int).ravel()
-    bottom_boundary = cv2.GaussianBlur(bottom_boundary.astype(np.float32), (15, 1), 0).astype(int).ravel()
+    # Reduced kernel to (5, 1) so steep peaks are not flattened out
+    top_boundary = cv2.GaussianBlur(top_boundary.astype(np.float32), (5, 1), 0).astype(int).ravel()
+    bottom_boundary = cv2.GaussianBlur(bottom_boundary.astype(np.float32), (5, 1), 0).astype(int).ravel()
                 #                                                                 ▲
                 #                                                                 └── Horizontal smoothing window (must be odd)
     return top_boundary, bottom_boundary
@@ -131,7 +178,7 @@ def create_overlay_image(bscan_raw, top_boundary, bottom_boundary):
     return overlay
 
 
-def run_pipeline(tiff_input_path, output_dir="professor_review_output"):
+def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mode=True):
     """
     Main execution pipeline. Processes the volume and exports four-panel comparison
     figures for professor evaluation.
@@ -143,18 +190,22 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output"):
     num_slices, height, width = raw_volume.shape
 
     # 2. Apply 3D Filtering across whole volume
-    filtered_volume = filter_volume_3d(raw_volume, kernel_size=(3, 5, 5))
+    filtered_volume = filter_volume_3d(raw_volume, kernel_size=(3, 3, 3))
 
-    print(f"[3/5] Extracting boundaries and binarizing {num_slices} B-scans...")
-
-    # Process representative slices (e.g., 25%, 50%, and 75% through the stack)
+    # Representative slices to inspect
     slices_to_export = [
         int(num_slices * 0.25),
         int(num_slices * 0.50),
         int(num_slices * 0.75)
     ]
+    if 250 < num_slices and 250 not in slices_to_export:
+        slices_to_export.append(250)
 
-    for slice_idx in range(num_slices):
+    slices_to_process = slices_to_export if demo_mode else range(num_slices)
+
+    print(f"[3/5] DEMO MODE: Extracting boundaries for {len(slices_to_process)} key B-scans...")
+
+    for slice_idx in slices_to_process:
         raw_bscan = raw_volume[slice_idx]
         filt_bscan = filtered_volume[slice_idx]
 
@@ -166,40 +217,38 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output"):
         overlay_img = create_overlay_image(raw_bscan, top_b, bot_b)
 
         # 5. Save visual report panels for selected key slices
-        if slice_idx in slices_to_export:
-            fig, axes = plt.subplots(1, 4, figsize=(20, 5))
+        fig, axes = plt.subplots(1, 4, figsize=(20, 5))
 
-            axes[0].imshow(raw_bscan, cmap='gray')
-            axes[0].set_title(f"1. Raw B-Scan (Slice {slice_idx})")
-            axes[0].axis('off')
+        axes[0].imshow(raw_bscan, cmap='gray')
+        axes[0].set_title(f"1. Raw B-Scan (Slice {slice_idx})")
+        axes[0].axis('off')
 
-            axes[1].imshow(filt_bscan, cmap='gray')
-            axes[1].set_title("2. 3D Filtered B-Scan")
-            axes[1].axis('off')
+        axes[1].imshow(filt_bscan, cmap='gray')
+        axes[1].set_title("2. 3D Filtered B-Scan")
+        axes[1].axis('off')
 
-            axes[2].imshow(cv2.cvtColor(overlay_img, cv2.COLOR_BGR2RGB))
-            axes[2].set_title("3. Detected Boundaries\n(Green: Top | Red: Bottom)")
-            axes[2].axis('off')
+        axes[2].imshow(cv2.cvtColor(overlay_img, cv2.COLOR_BGR2RGB))
+        axes[2].set_title("3. Graph-Cut Boundaries\n(Green: Top | Red: Bottom)")
+        axes[2].axis('off')
 
-            axes[3].imshow(binary_mask, cmap='gray')
-            axes[3].set_title("4. Final Binarized Mask")
-            axes[3].axis('off')
+        axes[3].imshow(binary_mask, cmap='gray')
+        axes[3].set_title("4. Final Binarized Mask")
+        axes[3].axis('off')
 
-            plt.tight_layout()
-            save_path = os.path.join(output_dir, f"BScan_Review_Slice_{slice_idx:03d}.png")
-            plt.savefig(save_path, dpi=300, bbox_inches='tight')
-            plt.close()
-            print(f" -> Saved professor review figure: {save_path}")
+        plt.tight_layout()
+        save_path = os.path.join(output_dir, f"BScan_Review_Slice_{slice_idx:03d}.png")
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+        plt.close()
+        print(f" -> Saved professor review figure: {save_path}")
 
     print(f"\n[5/5] Processing complete! Figures saved in folder: '{output_dir}/'")
 
 
 if __name__ == "__main__":
-    # Replace with the path to your multi-page .tiff stack file
     INPUT_TIFF_FILE = "Teeth11_2_RawBuffer7_Processed_Volume.tif"
 
     if os.path.exists(INPUT_TIFF_FILE):
-        run_pipeline(INPUT_TIFF_FILE)
+        run_pipeline(INPUT_TIFF_FILE, demo_mode=True)
     else:
         print(
             f"Error: Could not find file '{INPUT_TIFF_FILE}'. Please update INPUT_TIFF_FILE variable with your stack path.")
