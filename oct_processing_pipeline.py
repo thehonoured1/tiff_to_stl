@@ -44,7 +44,7 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20):
     """
     height, width = cost_matrix.shape
     dp = np.full((height, width), np.inf, dtype=np.float32) #store the cumulative cost of the cheapest path to reach any given pixel
-    backtrack = np.zeros((height, width), dtype=int)        #prev Y coordinate.
+    backtrack = np.zeros((height, width), dtype=int)        #prev Y coordinates.
 
     # Initialize first column
     dp[:, 0] = cost_matrix[:, 0]
@@ -52,19 +52,19 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20):
     # Forward Accumulation Pass
     for x in range(1, width):
         for y in range(height):
-            y_min = max(0, y - max_step)
-            y_max = min(height, y + max_step + 1)
+            y_min = max(0, y - max_step)            #python's min/max returns the min/max value among its params.
+            y_max = min(height, y + max_step + 1)   #y_min/max works to restrict range of checking. y as the current pixel, you can only fluctuate +- max_step
 
-            prev_costs = dp[y_min:y_max, x - 1]
-            best_prev_offset = np.argmin(prev_costs)
+            prev_costs = dp[y_min:y_max, x - 1]     #x-1 refers to the prev row.
+            best_prev_offset = np.argmin(prev_costs)    # returns the index (position) of the minimum value along a specified axis
             best_prev_y = y_min + best_prev_offset
 
             dp[y, x] = cost_matrix[y, x] + dp[best_prev_y, x - 1]
             backtrack[y, x] = best_prev_y
 
     # Backtracking Pass
-    optimal_path = np.zeros(width, dtype=int)
-    optimal_path[-1] = np.argmin(dp[:, -1])
+    optimal_path = np.zeros(width, dtype=int) # numpy array declaration.
+    optimal_path[-1] = np.argmin(dp[:, -1]) #in python, : means entire, -1 refers to the last value.
 
     for x in range(width - 1, 0, -1):
         optimal_path[x - 1] = backtrack[optimal_path[x], x]

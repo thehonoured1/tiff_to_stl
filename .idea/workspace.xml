@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="&quot;demo mode&quot;, slices to export at .25,.50,.75 for quick execution of demo images of the borders; &#10;Improved quality using Graph-Cut.">
+    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="comments save">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/oct_processing_pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/oct_processing_pipeline.py" afterDir="false" />
     </list>
@@ -103,7 +103,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784609856984</updated>
     </task>
-    <option name="localTasksCounter" value="5" />
+    <task id="LOCAL-00005" summary="comments save">
+      <option name="closed" value="true" />
+      <created>1784662434099</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1784662434099</updated>
+    </task>
+    <option name="localTasksCounter" value="6" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -111,6 +119,7 @@
     <MESSAGE value="added OCT B-scan processing that produces 3 sample images to see the binary mask." />
     <MESSAGE value="B-scan parameters highlighted via comments" />
     <MESSAGE value="&quot;demo mode&quot;, slices to export at .25,.50,.75 for quick execution of demo images of the borders; &#10;Improved quality using Graph-Cut." />
-    <option name="LAST_COMMIT_MESSAGE" value="&quot;demo mode&quot;, slices to export at .25,.50,.75 for quick execution of demo images of the borders; &#10;Improved quality using Graph-Cut." />
+    <MESSAGE value="comments save" />
+    <option name="LAST_COMMIT_MESSAGE" value="comments save" />
   </component>
 </project>
