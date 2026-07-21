@@ -9,7 +9,7 @@ from scipy.ndimage import label, binary_fill_holes
 from stl import mesh
 
 print("Loading volume...")
-volume = io.imread('Teeth31_2_RawBuffer6_Processed_Volume.tif')
+volume = io.imread('Teeth11_2_RawBuffer7_Processed_Volume.tif')
 
 # 1. Re-optimized Downsampling
 volume = volume[::2, ::2, ::2]
@@ -28,7 +28,7 @@ binary_volume = np.zeros_like(smoothed_volume, dtype=bool)
 for z in range(smoothed_volume.shape[0]):
     # block_size must be an odd number. It defines the search window.
     # offset subtracts a constant to kill off uniform background fog.
-    local_thresh = threshold_local(smoothed_volume[z], block_size=101, offset=3)
+    local_thresh = threshold_local(smoothed_volume[z], block_size=91, offset=3)
     binary_volume[z] = smoothed_volume[z] > local_thresh
 
 
