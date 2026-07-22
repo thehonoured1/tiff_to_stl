@@ -47,7 +47,7 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20):
     backtrack = np.zeros((height, width), dtype=int)        #prev Y coordinates.
 
     # Initialize first column
-    dp[:, 0] = cost_matrix[:, 0]
+    dp[:, 0] = cost_matrix[:, 0] # all y/column values copied over to dp[] for x/row 0
 
     # Forward Accumulation Pass
     for x in range(1, width):
@@ -56,18 +56,23 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20):
             y_max = min(height, y + max_step + 1)   #y_min/max works to restrict range of checking. y as the current pixel, you can only fluctuate +- max_step
 
             prev_costs = dp[y_min:y_max, x - 1]     #    x-1 refers to the prev row.
-            best_prev_offset = np.argmin(prev_costs)    # returns the index (position) of the minimum value along a specified axis
-            best_prev_y = y_min + best_prev_offset
+            best_prev_offset = np.argmin(prev_costs)    # returns the index (of prev_costs) of the minimum value along a specified axis
+            best_prev_y = y_min + best_prev_offset  # specific pixel found. Doubles as the index in dp
 
-            dp[y, x] = cost_matrix[y, x] + dp[best_prev_y, x - 1]
-            backtrack[y, x] = best_prev_y
+            dp[y, x] = cost_matrix[y, x] + dp[best_prev_y, x - 1] #add the running cost to dp
+            backtrack[y, x] = best_prev_y # store specific pixel index value.
 
     # Backtracking Pass
-    optimal_path = np.zeros(width, dtype=int) # numpy array declaration.
+    optimal_path = np.zeros(width, dtype=int) # numpy 1D array declaration.
+    # choose the cheapest running path from dp.
     optimal_path[-1] = np.argmin(dp[:, -1]) #in python, : means entire, -1 refers to the last value.
-
+                                            # here, optimal..[-1] contains the cheapest pixel.
     for x in range(width - 1, 0, -1):
+        # copy pixel values over to optimal_path.
         optimal_path[x - 1] = backtrack[optimal_path[x], x]
+#                                           ▲
+    #      starts off with the cheapest pixel in the last x/row, finds that pixel in backtrack[]
+    #      backtrack[] stores info of the closest pixel for that specific current pixel.
 
     # Validate path against user's minimum intensity threshold
     for x in range(width):
@@ -103,8 +108,8 @@ def detect_boundaries_2d(bscan_filtered):
 
     # Reduced threshold to 2 so faint enamel reflections are recognized
     top_boundary = graph_cut_solver(top_cost, min_threshold=2, max_step=50)
-    #                                                       ▲
-    #                                                       └── Min gradient intensity
+    #                                ▲                      ▲
+    #                                └──cost_matrix         └── Min gradient intensity
 
     # PARAMETER TUNING: Smooth boundary curves across adjacent columns (X-axis)
     # Reduced kernel to (5, 1) so steep peaks are not flattened out
@@ -120,9 +125,9 @@ def create_binary_mask(shape, top_boundary, offset=10):
 
     for x in range(width):
         y_start = top_boundary[x]
-        y_end = y_start + offset  # Fixed 5px thickness 📐
+        y_end = y_start + offset
         if y_start > 0:
-            binary_mask[y_start:y_end, x] = 255 # create the 5 pixels of white.
+            binary_mask[y_start:y_end, x] = 255 # create the {offset} pixels of white.
     # gap cleaning
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
     return cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel)
@@ -139,7 +144,7 @@ def create_overlay_image(bscan_raw, top_boundary, offset=5):
         if pt1_top[1] > 0 and pt2_top[1] > 0:
             cv2.line(overlay, pt1_top, pt2_top, (0, 255, 0), 2) # drawing
 
-        # 5px Offset Line (Red) 🔴
+        # Offset Line (Red) 🔴
         pt1_bot = (x - 1, top_boundary[x - 1] + offset)
         pt2_bot = (x, top_boundary[x] + offset)
         cv2.line(overlay, pt1_bot, pt2_bot, (0, 0, 255), 2)
@@ -181,9 +186,9 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
         # 3. Detect 2D Upper Boundary Only
         top_b = detect_boundaries_2d(filt_bscan)
 
-        # 4. Create Binary Mask & Overlay (5px offset)
-        binary_mask = create_binary_mask((height, width), top_b, offset=10)
-        overlay_img = create_overlay_image(raw_bscan, top_b, offset=10)
+        # 4. Create Binary Mask & Overlay
+        binary_mask = create_binary_mask((height, width), top_b, offset=30)
+        overlay_img = create_overlay_image(raw_bscan, top_b, offset=30)
 
         # 5. Save visual report panels for selected key slices
         fig, axes = plt.subplots(1, 4, figsize=(20, 5))
