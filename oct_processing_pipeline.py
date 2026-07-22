@@ -187,8 +187,8 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
         top_b = detect_boundaries_2d(filt_bscan)
 
         # 4. Create Binary Mask & Overlay
-        binary_mask = create_binary_mask((height, width), top_b, offset=30)
-        overlay_img = create_overlay_image(raw_bscan, top_b, offset=30)
+        binary_mask = create_binary_mask((height, width), top_b, offset=50)
+        overlay_img = create_overlay_image(raw_bscan, top_b, offset=50)
 
         # 5. Save visual report panels for selected key slices
         fig, axes = plt.subplots(1, 4, figsize=(20, 5))

@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="modifications to get a highly accurate scan of the 25,50, and 75th percentile of scans">
+    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="more comments, and modify output to have a binary mask and overlay image offset = 30">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/oct_processing_pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/oct_processing_pipeline.py" afterDir="false" />
     </list>
@@ -127,7 +127,15 @@
       <option name="project" value="LOCAL" />
       <updated>1784676451020</updated>
     </task>
-    <option name="localTasksCounter" value="8" />
+    <task id="LOCAL-00008" summary="more comments, and modify output to have a binary mask and overlay image offset = 30">
+      <option name="closed" value="true" />
+      <created>1784740673046</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1784740673046</updated>
+    </task>
+    <option name="localTasksCounter" value="9" />
     <servers />
   </component>
   <component name="VcsManagerConfiguration">
@@ -137,6 +145,7 @@
     <MESSAGE value="&quot;demo mode&quot;, slices to export at .25,.50,.75 for quick execution of demo images of the borders; &#10;Improved quality using Graph-Cut." />
     <MESSAGE value="comments save" />
     <MESSAGE value="modifications to get a highly accurate scan of the 25,50, and 75th percentile of scans" />
-    <option name="LAST_COMMIT_MESSAGE" value="modifications to get a highly accurate scan of the 25,50, and 75th percentile of scans" />
+    <MESSAGE value="more comments, and modify output to have a binary mask and overlay image offset = 30" />
+    <option name="LAST_COMMIT_MESSAGE" value="more comments, and modify output to have a binary mask and overlay image offset = 30" />
   </component>
 </project>
