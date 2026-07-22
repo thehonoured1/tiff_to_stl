@@ -4,6 +4,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.ndimage import median_filter
 from skimage import io
+import tifffile as tf
 
 
 def load_oct_volume(tiff_path):
@@ -175,45 +176,60 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
     if 250 < num_slices and 250 not in slices_to_export:
         slices_to_export.append(250)
 
-    slices_to_process = slices_to_export if demo_mode else range(num_slices)
+    slices_to_process = range(num_slices)
+    if demo_mode == True:
+        print(f"[3/5] DEMO MODE: Extracting boundaries for {len(slices_to_export)} key B-scans...")
+    else:
+        print(f"[3/5] regular MODE: Extracting boundaries for all B-scans...")
 
-    print(f"[3/5] DEMO MODE: Extracting boundaries for {len(slices_to_process)} key B-scans...")
+    # 1. Pre-allocate the 3D numpy array
+    depth, height, width = filtered_volume.shape
+    full_mask_3d = np.zeros((depth, height, width), dtype=np.uint8)
 
+    # 2. Loop over EVERY slice in the volume
     for slice_idx in slices_to_process:
-        raw_bscan = raw_volume[slice_idx]
         filt_bscan = filtered_volume[slice_idx]
 
         # 3. Detect 2D Upper Boundary Only
         top_b = detect_boundaries_2d(filt_bscan)
 
-        # 4. Create Binary Mask & Overlay
+        # 4. Create Binary Mask & place it into full_mask_3d
         binary_mask = create_binary_mask((height, width), top_b, offset=50)
-        overlay_img = create_overlay_image(raw_bscan, top_b, offset=50)
+        full_mask_3d[slice_idx] = binary_mask
 
-        # 5. Save visual report panels for selected key slices
-        fig, axes = plt.subplots(1, 4, figsize=(20, 5))
+        # 5. Save plot ONLY for designated demo/review slices
+        if demo_mode and slice_idx in slices_to_export:
+            raw_bscan = raw_volume[slice_idx]
+            overlay_img = create_overlay_image(raw_bscan, top_b, offset=50)
 
-        axes[0].imshow(raw_bscan, cmap='gray')
-        axes[0].set_title(f"1. Raw B-Scan (Slice {slice_idx})")
-        axes[0].axis('off')
+            fig, axes = plt.subplots(1, 4, figsize=(20, 5))
 
-        axes[1].imshow(filt_bscan, cmap='gray')
-        axes[1].set_title("2. 3D Filtered B-Scan")
-        axes[1].axis('off')
+            axes[0].imshow(raw_bscan, cmap='gray')
+            axes[0].set_title(f"1. Raw B-Scan (Slice {slice_idx})")
+            axes[0].axis('off')
 
-        axes[2].imshow(cv2.cvtColor(overlay_img, cv2.COLOR_BGR2RGB))
-        axes[2].set_title("3. Graph-Cut Boundaries\n(Green: Top | Red: Bottom)")
-        axes[2].axis('off')
+            axes[1].imshow(filt_bscan, cmap='gray')
+            axes[1].set_title("2. 3D Filtered B-Scan")
+            axes[1].axis('off')
 
-        axes[3].imshow(binary_mask, cmap='gray')
-        axes[3].set_title("4. Final Binarized Mask")
-        axes[3].axis('off')
+            axes[2].imshow(cv2.cvtColor(overlay_img, cv2.COLOR_BGR2RGB))
+            axes[2].set_title("3. Graph-Cut Boundaries\n(Green: Top | Red: Bottom)")
+            axes[2].axis('off')
 
-        plt.tight_layout()
-        save_path = os.path.join(output_dir, f"BScan_Review_Slice_{slice_idx:03d}.png")
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-        plt.close()
-        print(f" -> Saved professor review figure: {save_path}")
+            axes[3].imshow(binary_mask, cmap='gray')
+            axes[3].set_title("4. Final Binarized Mask")
+            axes[3].axis('off')
+
+            plt.tight_layout()
+            save_path = os.path.join(output_dir, f"BScan_Review_Slice_{slice_idx:03d}.png")
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+            plt.close()
+            print(f" -> Saved professor review figure: {save_path}")
+
+    # 6. Save the full 3D numpy array as a multi-page TIF file
+    output_tif_path = os.path.join(output_dir, "full_binarized_mask_volume.tif")
+    tf.imwrite(output_tif_path, full_mask_3d)
+    print(f" Saved full 3D TIF mask stack: {output_tif_path}")
 
     print(f"\n[5/5] Processing complete! Figures saved in folder: '{output_dir}/'")
 
