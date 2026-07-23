@@ -182,9 +182,14 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
     else:
         print(f"[3/5] regular MODE: Extracting boundaries for all B-scans...")
 
-    # 1. Pre-allocate the 3D numpy array
+    # 1. Pre-allocate the numpy arrays
     depth, height, width = filtered_volume.shape
+
+    # Single-channel grayscale mask (3D volume)
     full_mask_3d = np.zeros((depth, height, width), dtype=np.uint8)
+
+    # Multi-channel color image stack (4D volume: depth x height x width x 3 channels)
+    full_mask_3d_borders = np.zeros((depth, height, width, 3), dtype=np.uint8)
 
     # 2. Loop over EVERY slice in the volume
     for slice_idx in slices_to_process:
@@ -194,13 +199,18 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
         top_b = detect_boundaries_2d(filt_bscan)
 
         # 4. Create Binary Mask & place it into full_mask_3d
+        #    Create border outline diagram & place it into full_mask_3d_borders
         binary_mask = create_binary_mask((height, width), top_b, offset=50)
         full_mask_3d[slice_idx] = binary_mask
 
+        raw_bscan = raw_volume[slice_idx]
+        overlay_img = create_overlay_image(raw_bscan, top_b, offset=50)
+        full_mask_3d_borders[slice_idx] = overlay_img
+
         # 5. Save plot ONLY for designated demo/review slices
         if demo_mode and slice_idx in slices_to_export:
-            raw_bscan = raw_volume[slice_idx]
-            overlay_img = create_overlay_image(raw_bscan, top_b, offset=50)
+            # raw_bscan = raw_volume[slice_idx]                             MOVED TO ABOVE PARAGRAPH ^
+            # overlay_img = create_overlay_image(raw_bscan, top_b, offset=50)
 
             fig, axes = plt.subplots(1, 4, figsize=(20, 5))
 
@@ -230,7 +240,13 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
     output_tif_path = os.path.join(output_dir, "full_binarized_mask_volume.tif")
     tf.imwrite(output_tif_path, full_mask_3d)
     print(f" Saved full 3D TIF mask stack: {output_tif_path}")
-
+    output_tif_path_borders = os.path.join(output_dir, "full_border_overlay_volume.tif")
+    # Save 4D color volume
+    tf.imwrite(
+        os.path.join(output_dir, "full_overlay_borders.tif"),
+        full_mask_3d_borders,
+        photometric="rgb",
+    )
     print(f"\n[5/5] Processing complete! Figures saved in folder: '{output_dir}/'")
 
 
@@ -238,7 +254,7 @@ if __name__ == "__main__":
     INPUT_TIFF_FILE = "Teeth11_2_RawBuffer7_Processed_Volume.tif"
 
     if os.path.exists(INPUT_TIFF_FILE):
-        run_pipeline(INPUT_TIFF_FILE, demo_mode=True)
+        run_pipeline(INPUT_TIFF_FILE, demo_mode=False)
     else:
         print(
             f"Error: Could not find file '{INPUT_TIFF_FILE}'. Please update INPUT_TIFF_FILE variable with your stack path.")
