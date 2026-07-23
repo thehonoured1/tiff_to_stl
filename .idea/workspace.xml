@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="output binarized .tif file capability added.">
+    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="bordered tif file export added.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/oct_processing_pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/oct_processing_pipeline.py" afterDir="false" />
     </list>
@@ -151,8 +151,33 @@
       <option name="project" value="LOCAL" />
       <updated>1784750451304</updated>
     </task>
-    <option name="localTasksCounter" value="11" />
+    <task id="LOCAL-00011" summary="bordered tif file export added.">
+      <option name="closed" value="true" />
+      <created>1784837838475</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1784837838475</updated>
+    </task>
+    <option name="localTasksCounter" value="12" />
     <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="CUSTOM_BOOLEAN_PROPERTIES">
+                <map>
+                  <entry key="Show.Git.Branches" value="false" />
+                </map>
+              </option>
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="init?" />
@@ -164,6 +189,7 @@
     <MESSAGE value="more comments, and modify output to have a binary mask and overlay image offset = 30" />
     <MESSAGE value="more comments, and modify output to have a binary mask and overlay image offset = 50" />
     <MESSAGE value="output binarized .tif file capability added." />
-    <option name="LAST_COMMIT_MESSAGE" value="output binarized .tif file capability added." />
+    <MESSAGE value="bordered tif file export added." />
+    <option name="LAST_COMMIT_MESSAGE" value="bordered tif file export added." />
   </component>
 </project>

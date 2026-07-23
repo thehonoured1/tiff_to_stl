@@ -238,7 +238,7 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
 
     # 6. Save the full 3D numpy array as a multi-page TIF file
     output_tif_path = os.path.join(output_dir, "full_binarized_mask_volume.tif")
-    tf.imwrite(output_tif_path, full_mask_3d)
+    tf.imwrite(output_tif_path, full_mask_3d, compression="zlib",)
     print(f" Saved full 3D TIF mask stack: {output_tif_path}")
     output_tif_path_borders = os.path.join(output_dir, "full_border_overlay_volume.tif")
     # Save 4D color volume
@@ -246,6 +246,7 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
         os.path.join(output_dir, "full_overlay_borders.tif"),
         full_mask_3d_borders,
         photometric="rgb",
+        compression="zlib",
     )
     print(f"\n[5/5] Processing complete! Figures saved in folder: '{output_dir}/'")
 
