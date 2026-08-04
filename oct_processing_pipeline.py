@@ -40,7 +40,7 @@ def filter_volume_3d(volume, kernel_size=(3, 3, 3)):
 
 def graph_cut_solver(cost_matrix, min_threshold, max_step=20):
     """
-    Solves for the globally optimal continuous surface path using Dynamic Programming (Graph-Cut).
+    Solves for the globally optimal continuous surface path using (Graph-Cut) for ONE IMAGE SCAN.
     Prevents vertical zigzag jumps while respecting minimum gradient intensity thresholds.
     """
     height, width = cost_matrix.shape
@@ -56,11 +56,11 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20):
             y_min = max(0, y - max_step)            #python's min/max returns the min/max value among its params.
             y_max = min(height, y + max_step + 1)   #y_min/max works to restrict range of checking. y as the current pixel, you can only fluctuate +- max_step
 
-            prev_costs = dp[y_min:y_max, x - 1]     #    x-1 refers to the prev row.
+            prev_costs = dp[y_min:y_max, x - 1]     #    x-1 refers to the prev column; check withing range for the prev costs
             best_prev_offset = np.argmin(prev_costs)    # returns the index (of prev_costs) of the minimum value along a specified axis
-            best_prev_y = y_min + best_prev_offset  # specific pixel found. Doubles as the index in dp
+            best_prev_y = y_min + best_prev_offset  # specific pixel found. Doubles as the index in dp (see below)
 
-            dp[y, x] = cost_matrix[y, x] + dp[best_prev_y, x - 1] #add the running cost to dp
+            dp[y, x] = cost_matrix[y, x] + dp[best_prev_y, x - 1] # add the running cost of that pixel to dp
             backtrack[y, x] = best_prev_y # store specific pixel index value.
 
     # Backtracking Pass
@@ -81,7 +81,8 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20):
         if (np.max(cost_matrix[:, x]) - cost_matrix[best_y, x]) < min_threshold:
             optimal_path[x] = 0 if min_threshold == 2 else height - 1
 
-    return optimal_path
+    return optimal_path # a 1D array of  arr[xcolumn] == yrow value.
+                        # It needs to be stacked to apply a filter across the Z axis
 
 
 def detect_boundaries_2d(bscan_filtered):
@@ -110,14 +111,14 @@ def detect_boundaries_2d(bscan_filtered):
     # Reduced threshold to 2 so faint enamel reflections are recognized
     top_boundary = graph_cut_solver(top_cost, min_threshold=2, max_step=50)
     #                                ▲                      ▲
-    #                                └──cost_matrix         └── Min gradient intensity
+    #                                └──cost_matrix         └── Min gradient intensity   ; 1D array returned by graph_cut_solver.
 
     # PARAMETER TUNING: Smooth boundary curves across adjacent columns (X-axis)
     # Reduced kernel to (5, 1) so steep peaks are not flattened out
     top_boundary = cv2.GaussianBlur(top_boundary.astype(np.float32), (5, 1), 0).astype(int).ravel()
                 #                                                           ▲
                 #                                                           └── Horizontal smoothing window (must be odd)
-    return top_boundary
+    return top_boundary # polished 1D array
 
 
 def create_binary_mask(shape, top_boundary, offset=10):
