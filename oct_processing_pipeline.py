@@ -129,7 +129,7 @@ def create_binary_mask(shape, top_boundary, offset=10):
         y_start = top_boundary[x]
         y_end = y_start + offset
         if y_start > 0:
-            binary_mask[y_start:y_end, x] = 255 # create the {offset} pixels of white.
+            binary_mask[y_start:y_end, x] = 255 # color the pixels from top boundary to lower boundary white.
     # gap cleaning
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
     return cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel)
@@ -192,15 +192,23 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
     # Multi-channel color image stack (4D volume: depth x height x width x 3 channels)
     full_mask_3d_borders = np.zeros((depth, height, width, 3), dtype=np.uint8)
 
-    # 2. Loop over EVERY slice in the volume
+    # 1.5 Compile all 1D boundary arrays into a single list. Then compile into a numpy array (depth map).
+    all_paths = []
     for slice_idx in slices_to_process:
         filt_bscan = filtered_volume[slice_idx]
-
-        # 3. Detect 2D Upper Boundary Only
+       # Detect 2D Upper Boundary , then add to the 1D array compilation (to become Z axis'ed 2D array)
         top_b = detect_boundaries_2d(filt_bscan)
+        all_paths.append(top_b)
+
+    depth_map = np.vstack(all_paths)
+    smoothed_depth_map = median_filter(depth_map,size=5)
+
+    # 2. Loop over EVERY slice in the volume
+    for slice_idx in slices_to_process:
+        top_b = smoothed_depth_map[slice_idx]
 
         # 4. Create Binary Mask & place it into full_mask_3d
-        #    Create border outline diagram & place it into full_mask_3d_borders
+        #    Create border outline DIAGRAM & place it into  full_mask_3d_borders
         binary_mask = create_binary_mask((height, width), top_b, offset=50)
         full_mask_3d[slice_idx] = binary_mask
 
@@ -210,9 +218,6 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
 
         # 5. Save plot ONLY for designated demo/review slices
         if demo_mode and slice_idx in slices_to_export:
-            # raw_bscan = raw_volume[slice_idx]                             MOVED TO ABOVE PARAGRAPH ^
-            # overlay_img = create_overlay_image(raw_bscan, top_b, offset=50)
-
             fig, axes = plt.subplots(1, 4, figsize=(20, 5))
 
             axes[0].imshow(raw_bscan, cmap='gray')
@@ -236,6 +241,7 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
             plt.savefig(save_path, dpi=300, bbox_inches='tight')
             plt.close()
             print(f" -> Saved professor review figure: {save_path}")
+
 
     # 6. Save the full 3D numpy array as a multi-page TIF file
     output_tif_path = os.path.join(output_dir, "full_binarized_mask_volume.tif")

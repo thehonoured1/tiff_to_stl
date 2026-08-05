@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="zlib compression to both tif file exports added.">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/oct_processing_pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/oct_processing_pipeline.py" afterDir="false" />
-    </list>
+    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="updated comments to bring readers up to speed. Also this version produces unstable lines at the tooth top." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -168,7 +165,23 @@
       <option name="project" value="LOCAL" />
       <updated>1784838934119</updated>
     </task>
-    <option name="localTasksCounter" value="13" />
+    <task id="LOCAL-00013" summary="updated comments to bring readers up to speed. Also this version produces unstable lines at the tooth top.">
+      <option name="closed" value="true" />
+      <created>1785802198837</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1785802198837</updated>
+    </task>
+    <task id="LOCAL-00014" summary="updated comments to bring readers up to speed. Also this version produces unstable lines at the tooth top.">
+      <option name="closed" value="true" />
+      <created>1785968668196</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1785968668196</updated>
+    </task>
+    <option name="localTasksCounter" value="15" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -200,6 +213,7 @@
     <MESSAGE value="output binarized .tif file capability added." />
     <MESSAGE value="bordered tif file export added." />
     <MESSAGE value="zlib compression to both tif file exports added." />
-    <option name="LAST_COMMIT_MESSAGE" value="zlib compression to both tif file exports added." />
+    <MESSAGE value="updated comments to bring readers up to speed. Also this version produces unstable lines at the tooth top." />
+    <option name="LAST_COMMIT_MESSAGE" value="updated comments to bring readers up to speed. Also this version produces unstable lines at the tooth top." />
   </component>
 </project>
