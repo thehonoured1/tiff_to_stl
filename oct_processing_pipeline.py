@@ -38,14 +38,14 @@ def filter_volume_3d(volume, kernel_size=(3, 3, 3)):
     return filtered_vol
 
 
-def graph_cut_solver(cost_matrix, min_threshold, max_step=20):
+def graph_cut_solver(cost_matrix, min_threshold, max_step=20, lambda_penalty=1.0):
     """
     Solves for the globally optimal continuous surface path using (Graph-Cut) for ONE IMAGE SCAN.
     Prevents vertical zigzag jumps while respecting minimum gradient intensity thresholds.
     """
     height, width = cost_matrix.shape
     dp = np.full((height, width), np.inf, dtype=np.float32) #store the cumulative cost of the cheapest path to reach any given pixel
-    backtrack = np.zeros((height, width), dtype=int)        #prev Y coordinates.
+    backtrack = np.zeros((height, width), dtype=int)        #store prev Y coordinates.
 
     # Initialize first column
     dp[:, 0] = cost_matrix[:, 0] # all y/column values copied over to dp[] for x/row 0
@@ -56,24 +56,30 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20):
             y_min = max(0, y - max_step)            #python's min/max returns the min/max value among its params.
             y_max = min(height, y + max_step + 1)   #y_min/max works to restrict range of checking. y as the current pixel, you can only fluctuate +- max_step
 
-            prev_costs = dp[y_min:y_max, x - 1]     #    x-1 refers to the prev column; check withing range for the prev costs
-            best_prev_offset = np.argmin(prev_costs)    # returns the index (of prev_costs) of the minimum value along a specified axis
-            best_prev_y = y_min + best_prev_offset  # specific pixel found. Doubles as the index in dp (see below)
+            prev_costs = dp[y_min:y_max, x - 1]     #    x-1 refers to the prev column; check within range for the prev costs
 
-            dp[y, x] = cost_matrix[y, x] + dp[best_prev_y, x - 1] # add the running cost of that pixel to dp
-            backtrack[y, x] = best_prev_y # store specific pixel index value.
+            # Add stiffness penalty to prevent zig-zags ---
+            y_distances = np.arange(y_min, y_max) - y   # Array Broadcasting: apply arithmetic to all np array values.
+            jump_penalties = lambda_penalty * (y_distances ** 2)
+            penalized_prev_costs = prev_costs + jump_penalties
+
+            best_prev_offset = np.argmin(penalized_prev_costs)    # returns the best pixel index, which is then (see next line) offset against the first index in the pool of total column pixels considered.
+            best_prev_y = y_min + best_prev_offset  # specific pixel found.
+
+            dp[y, x] = cost_matrix[y, x] + penalized_prev_costs[best_prev_offset] # add the running cost of that pixel to dp
+            backtrack[y, x] = best_prev_y # store specific pixel index value, representing the cheapest previous pixel of the current pixel of coordinate [y,x].
 
     # Backtracking Pass
     optimal_path = np.zeros(width, dtype=int) # numpy 1D array declaration.
     # choose the cheapest running path from dp.
-    optimal_path[-1] = np.argmin(dp[:, -1]) #in python, : means entire, -1 refers to the last value.
-                                            # here, optimal..[-1] contains the cheapest pixel.
+    optimal_path[-1] = np.argmin(dp[:, -1]) #in python, : means entire, -1 refers to the last value; [y,x]
+                                            # here, optimal_path[-1] grabs the pixel w/ cheapest cumulative cost.
     for x in range(width - 1, 0, -1):
         # copy pixel values over to optimal_path.
         optimal_path[x - 1] = backtrack[optimal_path[x], x]
 #                                           ▲
     #      starts off with the cheapest pixel in the last x/row, finds that pixel in backtrack[]
-    #      backtrack[] stores info of the closest pixel for that specific current pixel.
+    #      backtrack[] contains stored info of the closest pixel for that specific current pixel.
 
     # Validate path against user's minimum intensity threshold
     for x in range(width):
@@ -109,7 +115,7 @@ def detect_boundaries_2d(bscan_filtered):
     top_cost = np.clip(top_cost, 0, None)
 
     # Reduced threshold to 2 so faint enamel reflections are recognized
-    top_boundary = graph_cut_solver(top_cost, min_threshold=2, max_step=50)
+    top_boundary = graph_cut_solver(top_cost, min_threshold=2, max_step=50, lambda_penalty=1.0)
     #                                ▲                      ▲
     #                                └──cost_matrix         └── Min gradient intensity   ; 1D array returned by graph_cut_solver.
 
@@ -133,7 +139,7 @@ def create_binary_mask(shape, top_boundary, offset=10):
     # gap cleaning
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
     return cv2.morphologyEx(binary_mask, cv2.MORPH_CLOSE, kernel)
-                #                           ^dilation followed by an erosion. fills in tiny single-pixel gaps or holes inside the white band.
+    #                                       ^dilation followed by an erosion. fills in tiny single-pixel gaps or holes inside the white band.
 
 def create_overlay_image(bscan_raw, top_boundary, offset=5):
     overlay = cv2.cvtColor(bscan_raw, cv2.COLOR_GRAY2BGR)

@@ -4,7 +4,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="updated comments to bring readers up to speed. Also this version produces unstable lines at the tooth top." />
+    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="Added median filter applied to depth-map (compiled shortest path arrays of all B-scans)">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/oct_processing_pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/oct_processing_pipeline.py" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -181,7 +184,15 @@
       <option name="project" value="LOCAL" />
       <updated>1785968668196</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="Added median filter applied to depth-map (compiled shortest path arrays of all B-scans)">
+      <option name="closed" value="true" />
+      <created>1785968883659</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1785968883659</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -214,6 +225,7 @@
     <MESSAGE value="bordered tif file export added." />
     <MESSAGE value="zlib compression to both tif file exports added." />
     <MESSAGE value="updated comments to bring readers up to speed. Also this version produces unstable lines at the tooth top." />
-    <option name="LAST_COMMIT_MESSAGE" value="updated comments to bring readers up to speed. Also this version produces unstable lines at the tooth top." />
+    <MESSAGE value="Added median filter applied to depth-map (compiled shortest path arrays of all B-scans)" />
+    <option name="LAST_COMMIT_MESSAGE" value="Added median filter applied to depth-map (compiled shortest path arrays of all B-scans)" />
   </component>
 </project>
