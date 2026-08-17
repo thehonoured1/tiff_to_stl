@@ -81,19 +81,21 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20, lambda_penalty=1.0
     #      starts off with the cheapest pixel in the last x/row, finds that pixel in backtrack[]
     #      backtrack[] contains stored info of the closest pixel for that specific current pixel.
 
-    # Validate path against user's minimum intensity threshold
+    """     # below check punishes approximations. Commented out for now.
+            # Validate path against user's minimum intensity threshold
     for x in range(width):
         best_y = optimal_path[x]
-        if (np.max(cost_matrix[:, x]) - cost_matrix[best_y, x]) < min_threshold:
+        
+        if (np.max(cost_matrix[:, x]) - cost_matrix[best_y, x]) < min_threshold: # np.max represents black color. if black/white contrast is less than the threshold, likely a false border.
             optimal_path[x] = 0 if min_threshold == 2 else height - 1
-
+    """
     return optimal_path # a 1D array of  arr[xcolumn] == yrow value.
                         # It needs to be stacked to apply a filter across the Z axis
 
 
 def detect_boundaries_2d(bscan_filtered):
     """
-    Detects upper (air-tissue) and lower boundary transitions on a single 2D B-scan
+    Detects upper (air-tissue) and lower boundary transitions on ONE 2D B-scan
     using Method 3 (Graph-Cut / Dynamic Programming) on vertical directional Sobel derivatives.
         PARAMETER TUNING:
         ksize=3: Picks up fine, sharp detail. Ideal for high-resolution scans where the enamel surface transition occurs over just a few pixels.
@@ -110,15 +112,15 @@ def detect_boundaries_2d(bscan_filtered):
     # PARAMETER TUNING:
     # Upper boundary: strongest positive transition (dark background to bright tissue)
     # --- METHOD 3: UPPER BOUNDARY GRAPH-CUT ---
-    max_pos_grad = np.max(sobel_y_smooth)
-    top_cost = max_pos_grad - sobel_y_smooth # invert the high gradient so it appears 'cheap' to graph_cut_solver.
+    max_pos_gradient = np.max(sobel_y_smooth)
+    top_cost = max_pos_gradient - sobel_y_smooth # invert the high gradient so it appears 'cheap' to graph_cut_solver.
     top_cost = np.clip(top_cost, 0, None)
 
     # Reduced threshold to 2 so faint enamel reflections are recognized
     top_boundary = graph_cut_solver(top_cost, min_threshold=2, max_step=50, lambda_penalty=1.0)
     #                                ▲                      ▲
     #                                └──cost_matrix         └── Min gradient intensity   ; 1D array returned by graph_cut_solver.
-
+    #                                                           (min contrast requirement)
     # PARAMETER TUNING: Smooth boundary curves across adjacent columns (X-axis)
     # Reduced kernel to (5, 1) so steep peaks are not flattened out
     top_boundary = cv2.GaussianBlur(top_boundary.astype(np.float32), (5, 1), 0).astype(int).ravel()
