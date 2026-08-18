@@ -46,7 +46,7 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20, lambda_penalty=1.0
     """
     height, width = cost_matrix.shape
     dp = np.full((height, width), np.inf, dtype=np.float32) #store the cumulative cost of the cheapest path to reach any given pixel
-    backtrack = np.zeros((height, width), dtype=int)        #store prev Y coordinates.
+    backtrack = np.zeros((height, width), dtype=np.int32)        #store prev Y coordinates.
 
     # Initialize first column
     dp[:, 0] = cost_matrix[:, 0] # all y/column values copied over to dp[] for x/row 0

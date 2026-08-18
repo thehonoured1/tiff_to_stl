@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="Commented out approximation punishment (min_threshold is temporarily unused).">
+    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="Applied Numba's njit decorator to graph_cut_solver">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/oct_processing_pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/oct_processing_pipeline.py" afterDir="false" />
     </list>
@@ -35,6 +35,9 @@
     &quot;accountId&quot;: &quot;b9961acb-22d0-48bf-9ef9-f8429276f8dc&quot;
   }
 }</component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 2
 }</component>
@@ -208,7 +211,15 @@
       <option name="project" value="LOCAL" />
       <updated>1787006988406</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="Applied Numba's njit decorator to graph_cut_solver">
+      <option name="closed" value="true" />
+      <created>1787027031979</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1787027031979</updated>
+    </task>
+    <option name="localTasksCounter" value="19" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -244,6 +255,7 @@
     <MESSAGE value="Added median filter applied to depth-map (compiled shortest path arrays of all B-scans)" />
     <MESSAGE value="Fixed explanatory comments on graph-cut's forward/backward passes." />
     <MESSAGE value="Commented out approximation punishment (min_threshold is temporarily unused)." />
-    <option name="LAST_COMMIT_MESSAGE" value="Commented out approximation punishment (min_threshold is temporarily unused)." />
+    <MESSAGE value="Applied Numba's njit decorator to graph_cut_solver" />
+    <option name="LAST_COMMIT_MESSAGE" value="Applied Numba's njit decorator to graph_cut_solver" />
   </component>
 </project>
