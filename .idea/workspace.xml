@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="Fixed explanatory comments on graph-cut's forward/backward passes.">
+    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="Commented out approximation punishment (min_threshold is temporarily unused).">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/oct_processing_pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/oct_processing_pipeline.py" afterDir="false" />
     </list>
@@ -200,7 +200,15 @@
       <option name="project" value="LOCAL" />
       <updated>1787002402353</updated>
     </task>
-    <option name="localTasksCounter" value="17" />
+    <task id="LOCAL-00017" summary="Commented out approximation punishment (min_threshold is temporarily unused).">
+      <option name="closed" value="true" />
+      <created>1787006988406</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1787006988406</updated>
+    </task>
+    <option name="localTasksCounter" value="18" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -235,6 +243,7 @@
     <MESSAGE value="updated comments to bring readers up to speed. Also this version produces unstable lines at the tooth top." />
     <MESSAGE value="Added median filter applied to depth-map (compiled shortest path arrays of all B-scans)" />
     <MESSAGE value="Fixed explanatory comments on graph-cut's forward/backward passes." />
-    <option name="LAST_COMMIT_MESSAGE" value="Fixed explanatory comments on graph-cut's forward/backward passes." />
+    <MESSAGE value="Commented out approximation punishment (min_threshold is temporarily unused)." />
+    <option name="LAST_COMMIT_MESSAGE" value="Commented out approximation punishment (min_threshold is temporarily unused)." />
   </component>
 </project>

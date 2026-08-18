@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from scipy.ndimage import median_filter
 from skimage import io
 import tifffile as tf
+from numba import njit
 
 
 def load_oct_volume(tiff_path):
@@ -37,7 +38,7 @@ def filter_volume_3d(volume, kernel_size=(3, 3, 3)):
     filtered_vol = median_filter(volume, size=kernel_size)  #kernel size == window size
     return filtered_vol
 
-
+@njit # decorator to speed up; abandon numpy array broadcasting
 def graph_cut_solver(cost_matrix, min_threshold, max_step=20, lambda_penalty=1.0):
     """
     Solves for the globally optimal continuous surface path using (Graph-Cut) for ONE IMAGE SCAN.
@@ -50,27 +51,46 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20, lambda_penalty=1.0
     # Initialize first column
     dp[:, 0] = cost_matrix[:, 0] # all y/column values copied over to dp[] for x/row 0
 
-    # Forward Accumulation Pass
+    #// Forward Accumulation Pass
     for x in range(1, width):
+        # Slice loop:
         for y in range(height):
             y_min = max(0, y - max_step)            #python's min/max returns the min/max value among its params.
             y_max = min(height, y + max_step + 1)   #y_min/max works to restrict range of checking. y as the current pixel, you can only fluctuate +- max_step
 
-            prev_costs = dp[y_min:y_max, x - 1]     #    x-1 refers to the prev column; check within range for the prev costs
+            best_cost = np.inf
+            best_prev_y = -1
 
-            # Add stiffness penalty to prevent zig-zags ---
-            y_distances = np.arange(y_min, y_max) - y   # Array Broadcasting: apply arithmetic to all np array values.
-            jump_penalties = lambda_penalty * (y_distances ** 2)
-            penalized_prev_costs = prev_costs + jump_penalties
+            # choose lowest cost from in-range previous y pixels:
+            for prev_y in range(y_min,y_max):
+                jump_penalty = lambda_penalty * ((prev_y - y) ** 2)
+                prev_cost = dp[prev_y, x - 1] + jump_penalty
 
-            best_prev_offset = np.argmin(penalized_prev_costs)    # returns the best pixel index, which is then (see next line) offset against the first index in the pool of total column pixels considered.
-            best_prev_y = y_min + best_prev_offset  # specific pixel found.
+                if prev_cost < best_cost:
+                    best_cost=prev_cost
+                    best_prev_y = prev_y
 
-            dp[y, x] = cost_matrix[y, x] + penalized_prev_costs[best_prev_offset] # add the running cost of that pixel to dp
-            backtrack[y, x] = best_prev_y # store specific pixel index value, representing the cheapest previous pixel of the current pixel of coordinate [y,x].
+            dp[y, x] = cost_matrix[y, x] + best_cost  # add the running cost of that pixel to dp
+            backtrack[y, x] = best_prev_y  # store specific pixel index value, representing the cheapest previous pixel of the current pixel of coordinate [y,x].
 
-    # Backtracking Pass
-    optimal_path = np.zeros(width, dtype=int) # numpy 1D array declaration.
+    #// Backtracking Pass:
+    optimal_path = np.zeros(width, dtype=np.int32) # numpy 1D array declaration.
+    # finding the best final y
+    min_value = np.inf
+    best_last_y = 0
+
+    for y in range(height):
+        if dp[y,-1] < min_value:
+            min_value = dp[y,-1]
+            best_last_y = y
+    optimal_path[width - 1] = best_last_y
+
+    # now use best_last_y to begin the backtracking:
+
+    for x in range(width-1, 0, -1):
+        optimal_path[x-1] = backtrack[optimal_path[x], x]
+
+    ''' # numpy implementation, commented out. Contains logic comments.
     # choose the cheapest running path from dp.
     optimal_path[-1] = np.argmin(dp[:, -1]) #in python, : means entire, -1 refers to the last value; [y,x]
                                             # here, optimal_path[-1] grabs the pixel w/ cheapest cumulative cost.
@@ -80,7 +100,7 @@ def graph_cut_solver(cost_matrix, min_threshold, max_step=20, lambda_penalty=1.0
 #                                           ▲
     #      starts off with the cheapest pixel in the last x/row, finds that pixel in backtrack[]
     #      backtrack[] contains stored info of the closest pixel for that specific current pixel.
-
+    '''
     """     # below check punishes approximations. Commented out for now.
             # Validate path against user's minimum intensity threshold
     for x in range(width):
