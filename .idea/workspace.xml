@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="Applied Numba's njit decorator to graph_cut_solver">
+    <list default="true" id="1cb21244-6fc6-46ad-9b86-12d361df9d1b" name="Changes" comment="int to np.int32 fix">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/oct_processing_pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/oct_processing_pipeline.py" afterDir="false" />
     </list>
@@ -219,7 +219,15 @@
       <option name="project" value="LOCAL" />
       <updated>1787027031979</updated>
     </task>
-    <option name="localTasksCounter" value="19" />
+    <task id="LOCAL-00019" summary="int to np.int32 fix">
+      <option name="closed" value="true" />
+      <created>1787029030291</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1787029030291</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -256,6 +264,7 @@
     <MESSAGE value="Fixed explanatory comments on graph-cut's forward/backward passes." />
     <MESSAGE value="Commented out approximation punishment (min_threshold is temporarily unused)." />
     <MESSAGE value="Applied Numba's njit decorator to graph_cut_solver" />
-    <option name="LAST_COMMIT_MESSAGE" value="Applied Numba's njit decorator to graph_cut_solver" />
+    <MESSAGE value="int to np.int32 fix" />
+    <option name="LAST_COMMIT_MESSAGE" value="int to np.int32 fix" />
   </component>
 </project>

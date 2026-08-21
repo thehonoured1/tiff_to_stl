@@ -287,8 +287,10 @@ def run_pipeline(tiff_input_path, output_dir="professor_review_output", demo_mod
 
 
 if __name__ == "__main__":
-    INPUT_TIFF_FILE = "Teeth11_2_RawBuffer7_Processed_Volume.tif"
-
+    INPUT_TIFF_FILE = "Teeth31_2_RawBuffer6_Processed_Volume.tif"
+    #Teeth34_2_RawBuffer5_Processed_Volume.tif
+    #Teeth31_2_RawBuffer6_Processed_Volume.tif
+    #Teeth11_2_RawBuffer7_Processed_Volume.tif
     if os.path.exists(INPUT_TIFF_FILE):
         run_pipeline(INPUT_TIFF_FILE, demo_mode=False)
     else:
